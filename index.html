@@ -2,10 +2,16 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Time Laps – טיימר סיבובים</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Time Laps</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     :root {
       --bg: #0d0f14;
@@ -19,24 +25,36 @@
       --text: #e8ecf4;
       --text-muted: #7a85a3;
       --radius: 16px;
+      /* Safe area for iPhone notch / home bar */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
     }
+
+    html { height: 100%; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px 40px;
+      padding:
+        calc(16px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        calc(32px + var(--safe-bottom))
+        calc(16px + var(--safe-left));
+      -webkit-text-size-adjust: 100%;
     }
 
     h1 {
-      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-size: clamp(1.7rem, 7vw, 2.4rem);
       font-weight: 800;
       letter-spacing: -0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       background: linear-gradient(135deg, var(--accent-work), var(--accent-break));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -45,101 +63,133 @@
 
     .subtitle {
       color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 32px;
+      font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+      margin-bottom: 20px;
+      text-align: center;
     }
 
-    /* ── Rounds config ────────────────────────────── */
-    .config-card {
+    /* ── Cards ─────────────────────────────────── */
+    .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 24px;
       width: 100%;
-      max-width: 560px;
-      margin-bottom: 20px;
+      max-width: 540px;
     }
 
-    .config-card h2 {
-      font-size: 0.85rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-muted);
+    .config-card {
+      padding: 20px 16px;
       margin-bottom: 16px;
     }
 
+    .config-card h2 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Round rows ─────────────────────────────── */
     .rounds-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .round-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 14px;
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: grid;
+      /* label | name | [times] | remove */
+      grid-template-columns: auto 1fr auto auto;
+      grid-template-rows: auto auto;
+      column-gap: 10px;
+      row-gap: 8px;
+      align-items: center;
     }
 
     .round-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
-      min-width: 60px;
+      white-space: nowrap;
+      grid-row: 1;
+      grid-column: 1;
     }
 
     .round-name {
-      flex: 1;
+      grid-row: 1;
+      grid-column: 2;
       background: transparent;
       border: none;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-family: inherit;
       outline: none;
+      min-width: 0;
     }
-
     .round-name::placeholder { color: var(--text-muted); }
 
-    .time-input-wrap {
+    .btn-remove {
+      grid-row: 1;
+      grid-column: 4;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 8px;
+      line-height: 1;
+      min-width: 36px;
+      min-height: 36px;
       display: flex;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      touch-action: manipulation;
+      transition: color 0.2s, background 0.2s;
+    }
+    .btn-remove:hover,
+    .btn-remove:active { color: var(--accent-danger); background: rgba(239,68,68,.12); }
+
+    .time-input-wrap {
+      grid-row: 2;
+      grid-column: 1 / 4;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .time-input-wrap input {
-      width: 52px;
+      width: 58px;
+      height: 40px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       color: var(--text);
-      font-size: 1rem;
+      font-size: 16px; /* prevents iOS auto-zoom */
       font-family: 'Courier New', monospace;
       text-align: center;
       padding: 4px 6px;
       outline: none;
+      touch-action: manipulation;
       transition: border-color 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
     }
-
     .time-input-wrap input:focus { border-color: var(--accent-work); }
-    .time-input-wrap span { color: var(--text-muted); font-size: 0.85rem; }
-
-    .btn-remove {
-      background: none;
-      border: none;
+    .time-input-wrap span {
       color: var(--text-muted);
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 6px;
-      line-height: 1;
-      transition: color 0.2s, background 0.2s;
+      font-size: 0.82rem;
+      white-space: nowrap;
     }
-    .btn-remove:hover { color: var(--accent-danger); background: rgba(239,68,68,.12); }
 
+    /* ── Add / Repeat ───────────────────────────── */
     .btn-add {
       display: flex;
       align-items: center;
@@ -148,57 +198,61 @@
       border: 1px dashed var(--border);
       border-radius: 10px;
       color: var(--text-muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       font-family: inherit;
       cursor: pointer;
-      padding: 8px 14px;
+      padding: 12px 14px;
       width: 100%;
       justify-content: center;
+      min-height: 46px;
+      touch-action: manipulation;
       transition: border-color 0.2s, color 0.2s;
     }
-    .btn-add:hover { border-color: var(--accent-work); color: var(--accent-work); }
+    .btn-add:hover,
+    .btn-add:active { border-color: var(--accent-work); color: var(--accent-work); }
 
     .repeat-row {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-top: 14px;
+      flex-wrap: wrap;
     }
-    .repeat-row label { font-size: 0.9rem; color: var(--text-muted); }
+    .repeat-row label { font-size: 0.88rem; color: var(--text-muted); }
     .repeat-row input {
-      width: 70px;
+      width: 72px;
+      height: 40px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       color: var(--text);
-      font-size: 1rem;
+      font-size: 16px;
       font-family: 'Courier New', monospace;
       text-align: center;
       padding: 4px 6px;
       outline: none;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
     }
     .repeat-row input:focus { border-color: var(--accent-work); }
+    .repeat-row span { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* ── Timer display ────────────────────────────── */
+    /* ── Timer card ─────────────────────────────── */
     .timer-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 24px;
-      width: 100%;
-      max-width: 560px;
+      padding: 24px 16px 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
 
     .phase-badge {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
-      padding: 4px 14px;
+      padding: 5px 16px;
       border-radius: 99px;
       background: rgba(79,142,247,.15);
       color: var(--accent-work);
@@ -210,16 +264,18 @@
     }
 
     .round-info {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      margin-top: -16px;
+      margin-top: -12px;
+      text-align: center;
     }
 
-    /* Ring progress */
+    /* ── Ring ───────────────────────────────────── */
     .ring-wrap {
       position: relative;
-      width: 220px;
-      height: 220px;
+      /* Responsive: 60% of viewport width but capped at 240px */
+      width: min(60vw, 240px);
+      height: min(60vw, 240px);
     }
 
     .ring-wrap svg {
@@ -241,61 +297,56 @@
       position: absolute;
       inset: 0;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
     }
 
     .time-display {
-      font-size: clamp(2.8rem, 10vw, 3.8rem);
+      font-size: clamp(2.2rem, 11vw, 3.6rem);
       font-family: 'Courier New', monospace;
       font-weight: 700;
       letter-spacing: 2px;
       line-height: 1;
       transition: color 0.3s;
     }
-
-    .time-display.warn { color: var(--accent-warn); }
+    .time-display.warn   { color: var(--accent-warn); }
     .time-display.danger { color: var(--accent-danger); }
 
-    /* Controls */
+    /* ── Controls ───────────────────────────────── */
     .controls {
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
+      gap: 10px;
+      width: 100%;
     }
 
     .btn {
+      flex: 1;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-family: inherit;
-      font-size: 0.95rem;
+      font-size: clamp(0.9rem, 4vw, 1rem);
       font-weight: 700;
       cursor: pointer;
-      padding: 12px 28px;
+      padding: 14px 10px;
+      min-height: 50px;
+      touch-action: manipulation;
       transition: opacity 0.2s, transform 0.1s;
+      -webkit-appearance: none;
     }
-    .btn:active { transform: scale(0.96); }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn:active  { transform: scale(0.95); }
+    .btn:disabled { opacity: 0.32; cursor: not-allowed; }
 
-    .btn-primary {
-      background: var(--accent-work);
-      color: #fff;
-    }
+    .btn-primary  { background: var(--accent-work); color: #fff; }
     .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
+      background: var(--surface2); color: var(--text);
       border: 1px solid var(--border);
     }
     .btn-danger {
-      background: rgba(239,68,68,.15);
-      color: var(--accent-danger);
+      background: rgba(239,68,68,.15); color: var(--accent-danger);
       border: 1px solid rgba(239,68,68,.25);
     }
 
-    /* Progress bar (phases) */
+    /* ── Phases bar ─────────────────────────────── */
     .phases-bar {
       display: flex;
       gap: 4px;
@@ -303,7 +354,7 @@
     }
     .phase-seg {
       flex: 1;
-      height: 5px;
+      height: 6px;
       border-radius: 99px;
       background: var(--surface2);
       transition: background 0.4s;
@@ -318,31 +369,23 @@
       animation: fillSeg linear forwards;
       animation-duration: var(--seg-dur, 5s);
     }
-    .phase-seg.done { background: rgba(79,142,247,.35); }
+    .phase-seg.done  { background: rgba(79,142,247,.35); }
     .phase-seg.break.active::after { background: var(--accent-break); }
-    .phase-seg.break.done { background: rgba(52,211,153,.35); }
+    .phase-seg.break.done  { background: rgba(52,211,153,.35); }
 
     @keyframes fillSeg {
       from { width: 0%; }
       to   { width: 100%; }
     }
 
-    /* Status */
+    /* ── Status / banner ────────────────────────── */
     .status-text {
       font-size: 0.85rem;
       color: var(--text-muted);
-      height: 18px;
+      min-height: 20px;
+      text-align: center;
     }
 
-    /* Pulse animation on beep */
-    @keyframes pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
-      70%  { box-shadow: 0 0 0 18px rgba(239,68,68,0); }
-      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
-    }
-    .ring-wrap.beep { animation: pulse 0.4s ease-out; }
-
-    /* Finished banner */
     .finished-banner {
       display: none;
       align-items: center;
@@ -350,15 +393,38 @@
       background: rgba(52,211,153,.12);
       border: 1px solid rgba(52,211,153,.3);
       border-radius: 12px;
-      padding: 12px 20px;
+      padding: 14px 20px;
       font-size: 0.95rem;
       color: var(--accent-break);
       font-weight: 600;
       width: 100%;
-      max-width: 560px;
+      max-width: 540px;
       justify-content: center;
+      margin-top: 12px;
     }
     .finished-banner.show { display: flex; }
+
+    /* ── Pulse on beep ──────────────────────────── */
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
+      70%  { box-shadow: 0 0 0 20px rgba(239,68,68,0); }
+      100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+    .ring-wrap.beep { animation: pulse 0.4s ease-out; border-radius: 50%; }
+
+    /* ── Landscape mobile: side-by-side ─────────── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body { padding-top: 10px; padding-bottom: 10px; }
+      h1   { font-size: 1.3rem; margin-bottom: 2px; }
+      .subtitle { display: none; }
+      .ring-wrap { width: min(35vw, 160px); height: min(35vw, 160px); }
+      .timer-card { flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
+      .phase-badge, .round-info, .phases-bar, .status-text {
+        width: 100%; text-align: center;
+      }
+      .controls { width: auto; flex-direction: column; }
+      .btn { min-height: 44px; padding: 10px 14px; }
+    }
   </style>
 </head>
 <body>
@@ -367,26 +433,27 @@
 <p class="subtitle">הגדר סיבובי זמן עם צפצופי ספירה לאחור</p>
 
 <!-- Config -->
-<div class="config-card">
+<div class="card config-card">
   <h2>הגדרת סיבובים</h2>
   <div class="rounds-list" id="roundsList"></div>
   <button class="btn-add" onclick="addRound()">＋ הוסף שלב</button>
   <div class="repeat-row">
     <label for="repeatCount">חזור על הסט:</label>
-    <input id="repeatCount" type="number" min="1" max="99" value="1" />
-    <span style="font-size:.85rem;color:var(--text-muted)">פעמים</span>
+    <input id="repeatCount" type="number" inputmode="numeric" min="1" max="99" value="1" />
+    <span>פעמים</span>
   </div>
 </div>
 
 <!-- Timer -->
-<div class="timer-card">
+<div class="card timer-card">
   <div class="phase-badge" id="phaseBadge">מוכן</div>
   <div class="round-info" id="roundInfo">סיבוב – / –</div>
 
   <div class="ring-wrap" id="ringWrap">
     <svg viewBox="0 0 220 220">
-      <circle class="ring-bg" cx="110" cy="110" r="100" />
-      <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="100"
+      <circle class="ring-bg"       cx="110" cy="110" r="100" />
+      <circle class="ring-progress" cx="110" cy="110" r="100"
+        id="ringProgress"
         stroke-dasharray="628.3"
         stroke-dashoffset="0" />
     </svg>
@@ -398,22 +465,18 @@
   <div class="phases-bar" id="phasesBar"></div>
 
   <div class="controls">
-    <button class="btn btn-primary" id="btnStart" onclick="startTimer()">התחל</button>
+    <button class="btn btn-primary"   id="btnStart" onclick="startTimer()">התחל</button>
     <button class="btn btn-secondary" id="btnPause" onclick="pauseTimer()" disabled>השהה</button>
-    <button class="btn btn-danger" id="btnReset" onclick="resetTimer()" disabled>אפס</button>
+    <button class="btn btn-danger"    id="btnReset" onclick="resetTimer()" disabled>אפס</button>
   </div>
 
   <div class="status-text" id="statusText"></div>
 </div>
 
-<div class="finished-banner" id="finishedBanner">
-  ✅ כל הסיבובים הושלמו!
-</div>
+<div class="finished-banner" id="finishedBanner">✅ כל הסיבובים הושלמו!</div>
 
 <script>
-/* ─────────────────────────────────────────────
-   Default rounds
-───────────────────────────────────────────── */
+/* ── Default rounds ─────────────────────────── */
 let roundDefs = [
   { name: 'עבודה', mins: 5, secs: 0 },
   { name: 'הפסקה', mins: 1, secs: 0 },
@@ -438,17 +501,18 @@ function renderConfig() {
     row.className = 'round-row';
     row.innerHTML = `
       <span class="round-label">שלב ${i + 1}</span>
-      <input class="round-name" type="text" placeholder="שם" value="${r.name}"
+      <input class="round-name" type="text" placeholder="שם השלב" value="${r.name}"
         oninput="roundDefs[${i}].name=this.value" />
+      <button class="btn-remove" onclick="removeRound(${i})" title="הסר שלב">✕</button>
       <div class="time-input-wrap">
-        <input type="number" min="0" max="99" value="${r.mins}"
+        <input type="number" inputmode="numeric" min="0" max="99" value="${r.mins}"
           oninput="roundDefs[${i}].mins=+this.value" />
-        <span>דק׳</span>
-        <input type="number" min="0" max="59" value="${String(r.secs).padStart(2,'0')}"
+        <span>דקות</span>
+        <input type="number" inputmode="numeric" min="0" max="59"
+          value="${String(r.secs).padStart(2,'0')}"
           oninput="roundDefs[${i}].secs=+this.value" />
-        <span>שנ׳</span>
+        <span>שניות</span>
       </div>
-      <button class="btn-remove" onclick="removeRound(${i})" title="הסר">✕</button>
     `;
     list.appendChild(row);
   });
@@ -456,20 +520,19 @@ function renderConfig() {
 
 renderConfig();
 
-/* ─────────────────────────────────────────────
-   Audio (Web Audio API)
-───────────────────────────────────────────── */
+/* ── Audio ──────────────────────────────────── */
 let audioCtx = null;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
 function beep(freq = 880, durationMs = 120, volume = 0.5) {
   try {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
+    const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -479,23 +542,15 @@ function beep(freq = 880, durationMs = 120, volume = 0.5) {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + durationMs / 1000);
-  } catch (e) { console.warn('audio error', e); }
+  } catch (e) { console.warn('audio', e); }
 }
 
-function shortBeep() { beep(880, 130, 0.55); }
-function longBeep()  { beep(660, 600, 0.65); }
+const shortBeep = () => beep(880, 130, 0.55);
+const longBeep  = () => beep(660, 600, 0.65);
 
-/* ─────────────────────────────────────────────
-   Timer state
-───────────────────────────────────────────── */
-let sequence = [];   // flat list of {name, totalSecs, isBreak}
-let seqIdx = 0;
-let remaining = 0;
-let totalForPhase = 0;
-let repeatCount = 1;
-let currentRepeat = 0;
-let ticker = null;
-let running = false;
+/* ── Timer state ────────────────────────────── */
+let sequence = [], seqIdx = 0, remaining = 0, totalForPhase = 0;
+let repeatCount = 1, ticker = null, running = false;
 let beeped3 = false, beeped2 = false, beeped1 = false;
 
 function buildSequence() {
@@ -517,18 +572,13 @@ function buildSequence() {
 }
 
 function startTimer() {
-  // Unlock audio context on first user gesture
-  getAudioCtx();
-
+  getAudioCtx(); // unlock on user gesture
   if (sequence.length === 0 || seqIdx >= sequence.length) {
     buildSequence();
     seqIdx = 0;
   }
-
   if (!running) {
-    if (remaining === 0) {
-      loadPhase(seqIdx);
-    }
+    if (remaining === 0) loadPhase(seqIdx);
     running = true;
     document.getElementById('btnStart').disabled = true;
     document.getElementById('btnPause').disabled = false;
@@ -540,33 +590,30 @@ function startTimer() {
 }
 
 function pauseTimer() {
-  if (running) {
-    running = false;
-    clearInterval(ticker);
-    document.getElementById('btnStart').disabled = false;
-    document.getElementById('btnPause').disabled = true;
-    document.getElementById('statusText').textContent = '⏸ מושהה';
-  }
+  if (!running) return;
+  running = false;
+  clearInterval(ticker);
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnPause').disabled = true;
+  document.getElementById('statusText').textContent = '⏸ מושהה';
 }
 
 function resetTimer() {
   clearInterval(ticker);
   running = false;
-  seqIdx = 0;
-  remaining = 0;
-  sequence = [];
+  seqIdx = 0; remaining = 0; sequence = [];
   beeped3 = beeped2 = beeped1 = false;
   updateDisplay(0, 0);
-  document.getElementById('phaseBadge').textContent = 'מוכן';
-  document.getElementById('phaseBadge').className = 'phase-badge';
-  document.getElementById('roundInfo').textContent = 'סיבוב – / –';
+  document.getElementById('phaseBadge').textContent  = 'מוכן';
+  document.getElementById('phaseBadge').className    = 'phase-badge';
+  document.getElementById('roundInfo').textContent   = 'סיבוב – / –';
   document.getElementById('ringProgress').style.strokeDashoffset = '0';
   document.getElementById('ringProgress').style.stroke = 'var(--accent-work)';
-  document.getElementById('timeDisplay').className = 'time-display';
-  document.getElementById('statusText').textContent = '';
-  document.getElementById('btnStart').disabled = false;
-  document.getElementById('btnPause').disabled = true;
-  document.getElementById('btnReset').disabled = true;
+  document.getElementById('timeDisplay').className   = 'time-display';
+  document.getElementById('statusText').textContent  = '';
+  document.getElementById('btnStart').disabled  = false;
+  document.getElementById('btnPause').disabled  = true;
+  document.getElementById('btnReset').disabled  = true;
   document.getElementById('finishedBanner').classList.remove('show');
   renderPhasesBar([]);
 }
@@ -579,7 +626,7 @@ function loadPhase(idx) {
 
   const badge = document.getElementById('phaseBadge');
   badge.textContent = ph.name;
-  badge.className = 'phase-badge' + (ph.isBreak ? ' break' : '');
+  badge.className   = 'phase-badge' + (ph.isBreak ? ' break' : '');
 
   document.getElementById('ringProgress').style.stroke =
     ph.isBreak ? 'var(--accent-break)' : 'var(--accent-work)';
@@ -591,16 +638,10 @@ function loadPhase(idx) {
 }
 
 function tick() {
-  if (remaining <= 0) {
-    nextPhase();
-    return;
-  }
-
-  // Beep logic
+  if (remaining <= 0) { nextPhase(); return; }
   if (remaining === 3 && !beeped3) { beeped3 = true; shortBeep(); pulseRing(); }
   if (remaining === 2 && !beeped2) { beeped2 = true; shortBeep(); pulseRing(); }
   if (remaining === 1 && !beeped1) { beeped1 = true; longBeep();  pulseRing(); }
-
   updateDisplay(remaining, totalForPhase);
   remaining--;
 }
@@ -608,7 +649,6 @@ function tick() {
 function nextPhase() {
   seqIdx++;
   if (seqIdx >= sequence.length) {
-    // All done
     clearInterval(ticker);
     running = false;
     updateDisplay(0, totalForPhase);
@@ -618,46 +658,37 @@ function nextPhase() {
     document.getElementById('btnPause').disabled = true;
     document.getElementById('finishedBanner').classList.add('show');
     longBeep();
-    setTimeout(() => { longBeep(); }, 700);
+    setTimeout(longBeep, 700);
     return;
   }
   loadPhase(seqIdx);
   beeped3 = beeped2 = beeped1 = false;
 }
 
-/* ─────────────────────────────────────────────
-   Display helpers
-───────────────────────────────────────────── */
+/* ── Display ────────────────────────────────── */
 function updateDisplay(secs, total) {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  const text = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  document.getElementById('timeDisplay').textContent = text;
+  const m = Math.floor(secs / 60), s = secs % 60;
+  document.getElementById('timeDisplay').textContent =
+    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
-  // Color warning
   const disp = document.getElementById('timeDisplay');
-  if (secs <= 1) disp.className = 'time-display danger';
-  else if (secs <= 3) disp.className = 'time-display warn';
-  else disp.className = 'time-display';
+  disp.className = secs <= 1 ? 'time-display danger'
+                 : secs <= 3 ? 'time-display warn'
+                 : 'time-display';
 
-  // Ring progress (circumference = 2π×100 ≈ 628.3)
   const CIRC = 628.3;
-  const ratio = total > 0 ? secs / total : 0;
-  document.getElementById('ringProgress').style.strokeDashoffset = CIRC * (1 - ratio);
+  document.getElementById('ringProgress').style.strokeDashoffset =
+    CIRC * (1 - (total > 0 ? secs / total : 0));
 
-  // status text
-  if (secs <= 3 && secs > 0 && running) {
-    document.getElementById('statusText').textContent = `⚠️ ${secs} שניות נותרו!`;
-  } else if (running) {
-    document.getElementById('statusText').textContent = '';
-  }
+  document.getElementById('statusText').textContent =
+    (secs <= 3 && secs > 0 && running) ? `⚠️ ${secs} שניות נותרו!` : '';
 }
 
 function pulseRing() {
-  const ring = document.getElementById('ringWrap');
-  ring.classList.remove('beep');
-  void ring.offsetWidth; // reflow
-  ring.classList.add('beep');
+  const r = document.getElementById('ringWrap');
+  r.classList.remove('beep');
+  void r.offsetWidth;
+  r.classList.add('beep');
 }
 
 function renderPhasesBar(seq) {
@@ -665,13 +696,11 @@ function renderPhasesBar(seq) {
   bar.innerHTML = '';
   seq.forEach((ph, i) => {
     const seg = document.createElement('div');
-    seg.className = 'phase-seg' +
-      (ph.isBreak ? ' break' : '') +
-      (i < seqIdx ? ' done' : '') +
-      (i === seqIdx ? ' active' : '');
-    if (i === seqIdx) {
-      seg.style.setProperty('--seg-dur', ph.totalSecs + 's');
-    }
+    seg.className = 'phase-seg'
+      + (ph.isBreak ? ' break' : '')
+      + (i < seqIdx  ? ' done'  : '')
+      + (i === seqIdx ? ' active' : '');
+    if (i === seqIdx) seg.style.setProperty('--seg-dur', ph.totalSecs + 's');
     seg.title = ph.name;
     bar.appendChild(seg);
   });
