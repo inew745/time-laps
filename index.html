@@ -6,6 +6,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0d0f14" />
   <title>Time Laps</title>
   <style>
     *, *::before, *::after {
@@ -25,7 +26,6 @@
       --text: #e8ecf4;
       --text-muted: #7a85a3;
       --radius: 16px;
-      /* Safe area for iPhone notch / home bar */
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -43,9 +43,9 @@
       flex-direction: column;
       align-items: center;
       padding:
-        calc(16px + var(--safe-top))
+        calc(14px + var(--safe-top))
         calc(16px + var(--safe-right))
-        calc(32px + var(--safe-bottom))
+        calc(28px + var(--safe-bottom))
         calc(16px + var(--safe-left));
       -webkit-text-size-adjust: 100%;
     }
@@ -54,7 +54,7 @@
       font-size: clamp(1.7rem, 7vw, 2.4rem);
       font-weight: 800;
       letter-spacing: -0.5px;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       background: linear-gradient(135deg, var(--accent-work), var(--accent-break));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -63,12 +63,38 @@
 
     .subtitle {
       color: var(--text-muted);
-      font-size: clamp(0.8rem, 3.5vw, 0.9rem);
-      margin-bottom: 20px;
+      font-size: clamp(0.78rem, 3.2vw, 0.88rem);
+      margin-bottom: 16px;
       text-align: center;
     }
 
-    /* ── Cards ─────────────────────────────────── */
+    /* Wake lock pill */
+    .wakelock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 3px 10px;
+      margin-bottom: 14px;
+      transition: color 0.3s, border-color 0.3s;
+    }
+    .wakelock-pill.active {
+      color: var(--accent-break);
+      border-color: rgba(52,211,153,.35);
+    }
+    .wakelock-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+    .wakelock-pill.active .wakelock-dot { background: var(--accent-break); }
+
+    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -78,20 +104,20 @@
     }
 
     .config-card {
-      padding: 20px 16px;
-      margin-bottom: 16px;
+      padding: 18px 16px;
+      margin-bottom: 14px;
     }
 
     .config-card h2 {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 700;
       letter-spacing: 0.09em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
-    /* ── Round rows ─────────────────────────────── */
+    /* Round rows */
     .rounds-list {
       display: flex;
       flex-direction: column;
@@ -103,10 +129,9 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 11px 14px;
       display: grid;
-      /* label | name | [times] | remove */
-      grid-template-columns: auto 1fr auto auto;
+      grid-template-columns: auto 1fr auto;
       grid-template-rows: auto auto;
       column-gap: 10px;
       row-gap: 8px;
@@ -114,16 +139,14 @@
     }
 
     .round-label {
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       color: var(--text-muted);
       white-space: nowrap;
-      grid-row: 1;
-      grid-column: 1;
+      grid-row: 1; grid-column: 1;
     }
 
     .round-name {
-      grid-row: 1;
-      grid-column: 2;
+      grid-row: 1; grid-column: 2;
       background: transparent;
       border: none;
       color: var(--text);
@@ -135,21 +158,16 @@
     .round-name::placeholder { color: var(--text-muted); }
 
     .btn-remove {
-      grid-row: 1;
-      grid-column: 4;
+      grid-row: 1; grid-column: 3;
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 1.05rem;
+      font-size: 1rem;
       cursor: pointer;
-      padding: 6px 8px;
+      padding: 0;
       border-radius: 8px;
-      line-height: 1;
-      min-width: 36px;
-      min-height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      min-width: 36px; min-height: 36px;
+      display: flex; align-items: center; justify-content: center;
       touch-action: manipulation;
       transition: color 0.2s, background 0.2s;
     }
@@ -157,71 +175,12 @@
     .btn-remove:active { color: var(--accent-danger); background: rgba(239,68,68,.12); }
 
     .time-input-wrap {
-      grid-row: 2;
-      grid-column: 1 / 4;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      grid-row: 2; grid-column: 1 / 4;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     }
 
     .time-input-wrap input {
-      width: 58px;
-      height: 40px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-size: 16px; /* prevents iOS auto-zoom */
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      padding: 4px 6px;
-      outline: none;
-      touch-action: manipulation;
-      transition: border-color 0.2s;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .time-input-wrap input:focus { border-color: var(--accent-work); }
-    .time-input-wrap span {
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      white-space: nowrap;
-    }
-
-    /* ── Add / Repeat ───────────────────────────── */
-    .btn-add {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      font-family: inherit;
-      cursor: pointer;
-      padding: 12px 14px;
-      width: 100%;
-      justify-content: center;
-      min-height: 46px;
-      touch-action: manipulation;
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .btn-add:hover,
-    .btn-add:active { border-color: var(--accent-work); color: var(--accent-work); }
-
-    .repeat-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-    .repeat-row label { font-size: 0.88rem; color: var(--text-muted); }
-    .repeat-row input {
-      width: 72px;
-      height: 40px;
+      width: 58px; height: 42px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -232,56 +191,78 @@
       padding: 4px 6px;
       outline: none;
       touch-action: manipulation;
-      -webkit-appearance: none;
-      appearance: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .time-input-wrap input:focus { border-color: var(--accent-work); }
+    .time-input-wrap span { color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; }
+
+    .btn-add {
+      display: flex; align-items: center; gap: 6px;
+      background: none;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 0.9rem; font-family: inherit;
+      cursor: pointer;
+      padding: 12px 14px; width: 100%;
+      justify-content: center; min-height: 46px;
+      touch-action: manipulation;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-add:hover, .btn-add:active { border-color: var(--accent-work); color: var(--accent-work); }
+
+    .repeat-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px; flex-wrap: wrap;
+    }
+    .repeat-row label { font-size: 0.88rem; color: var(--text-muted); }
+    .repeat-row input {
+      width: 72px; height: 42px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px; font-family: 'Courier New', monospace;
+      text-align: center; padding: 4px 6px; outline: none;
+      touch-action: manipulation;
+      -webkit-appearance: none; appearance: none;
     }
     .repeat-row input:focus { border-color: var(--accent-work); }
     .repeat-row span { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* ── Timer card ─────────────────────────────── */
+    /* Timer card */
     .timer-card {
-      padding: 24px 16px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
+      padding: 22px 16px 18px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 18px;
     }
 
     .phase-badge {
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      padding: 5px 16px;
-      border-radius: 99px;
+      font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      padding: 5px 16px; border-radius: 99px;
       background: rgba(79,142,247,.15);
       color: var(--accent-work);
-      transition: background 0.4s, color 0.4s;
+      transition: background 0.3s, color 0.3s;
     }
-    .phase-badge.break {
-      background: rgba(52,211,153,.15);
-      color: var(--accent-break);
-    }
+    .phase-badge.break { background: rgba(52,211,153,.15); color: var(--accent-break); }
 
     .round-info {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: -12px;
-      text-align: center;
+      font-size: 0.8rem; color: var(--text-muted);
+      margin-top: -10px; text-align: center;
     }
 
-    /* ── Ring ───────────────────────────────────── */
+    /* Ring */
     .ring-wrap {
       position: relative;
-      /* Responsive: 60% of viewport width but capped at 240px */
-      width: min(60vw, 240px);
-      height: min(60vw, 240px);
+      width: min(62vw, 240px);
+      height: min(62vw, 240px);
     }
 
     .ring-wrap svg {
       transform: rotate(-90deg);
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
     }
 
     .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
@@ -290,121 +271,72 @@
       stroke: var(--accent-work);
       stroke-width: 10;
       stroke-linecap: round;
-      transition: stroke-dashoffset 0.9s linear, stroke 0.4s;
+      transition: stroke 0.4s;
+      /* No CSS transition on dashoffset — JS updates it directly for accuracy */
     }
 
     .ring-time {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
     }
 
     .time-display {
-      font-size: clamp(2.2rem, 11vw, 3.6rem);
+      font-size: clamp(2.4rem, 12vw, 3.6rem);
       font-family: 'Courier New', monospace;
-      font-weight: 700;
-      letter-spacing: 2px;
-      line-height: 1;
+      font-weight: 700; letter-spacing: 2px; line-height: 1;
       transition: color 0.3s;
     }
     .time-display.warn   { color: var(--accent-warn); }
     .time-display.danger { color: var(--accent-danger); }
 
-    /* ── Controls ───────────────────────────────── */
-    .controls {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
+    /* Controls */
+    .controls { display: flex; gap: 10px; width: 100%; }
 
     .btn {
-      flex: 1;
-      border: none;
-      border-radius: 12px;
+      flex: 1; border: none; border-radius: 12px;
       font-family: inherit;
       font-size: clamp(0.9rem, 4vw, 1rem);
-      font-weight: 700;
-      cursor: pointer;
-      padding: 14px 10px;
-      min-height: 50px;
+      font-weight: 700; cursor: pointer;
+      padding: 14px 10px; min-height: 52px;
       touch-action: manipulation;
       transition: opacity 0.2s, transform 0.1s;
       -webkit-appearance: none;
     }
     .btn:active  { transform: scale(0.95); }
-    .btn:disabled { opacity: 0.32; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    .btn-primary  { background: var(--accent-work); color: #fff; }
-    .btn-secondary {
-      background: var(--surface2); color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-danger {
-      background: rgba(239,68,68,.15); color: var(--accent-danger);
-      border: 1px solid rgba(239,68,68,.25);
-    }
+    .btn-primary   { background: var(--accent-work); color: #fff; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger    { background: rgba(239,68,68,.15); color: var(--accent-danger); border: 1px solid rgba(239,68,68,.25); }
 
-    /* ── Phases bar ─────────────────────────────── */
-    .phases-bar {
-      display: flex;
-      gap: 4px;
-      width: 100%;
-    }
+    /* Phases bar */
+    .phases-bar { display: flex; gap: 4px; width: 100%; }
     .phase-seg {
-      flex: 1;
-      height: 6px;
-      border-radius: 99px;
+      flex: 1; height: 6px; border-radius: 99px;
       background: var(--surface2);
-      transition: background 0.4s;
-      position: relative;
-      overflow: hidden;
+      transition: background 0.3s;
     }
-    .phase-seg.active::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--accent-work);
-      animation: fillSeg linear forwards;
-      animation-duration: var(--seg-dur, 5s);
-    }
-    .phase-seg.done  { background: rgba(79,142,247,.35); }
-    .phase-seg.break.active::after { background: var(--accent-break); }
-    .phase-seg.break.done  { background: rgba(52,211,153,.35); }
+    .phase-seg.active { background: var(--accent-work); }
+    .phase-seg.done   { background: rgba(79,142,247,.35); }
+    .phase-seg.break.active { background: var(--accent-break); }
+    .phase-seg.break.done   { background: rgba(52,211,153,.35); }
 
-    @keyframes fillSeg {
-      from { width: 0%; }
-      to   { width: 100%; }
-    }
-
-    /* ── Status / banner ────────────────────────── */
     .status-text {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      min-height: 20px;
-      text-align: center;
+      font-size: 0.85rem; color: var(--text-muted);
+      min-height: 20px; text-align: center;
     }
 
     .finished-banner {
-      display: none;
-      align-items: center;
-      gap: 10px;
+      display: none; align-items: center; gap: 10px;
       background: rgba(52,211,153,.12);
       border: 1px solid rgba(52,211,153,.3);
-      border-radius: 12px;
-      padding: 14px 20px;
-      font-size: 0.95rem;
-      color: var(--accent-break);
-      font-weight: 600;
-      width: 100%;
-      max-width: 540px;
-      justify-content: center;
-      margin-top: 12px;
+      border-radius: 12px; padding: 14px 20px;
+      font-size: 0.95rem; color: var(--accent-break); font-weight: 600;
+      width: 100%; max-width: 540px;
+      justify-content: center; margin-top: 12px;
     }
     .finished-banner.show { display: flex; }
 
-    /* ── Pulse on beep ──────────────────────────── */
     @keyframes pulse {
       0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.55); }
       70%  { box-shadow: 0 0 0 20px rgba(239,68,68,0); }
@@ -412,17 +344,14 @@
     }
     .ring-wrap.beep { animation: pulse 0.4s ease-out; border-radius: 50%; }
 
-    /* ── Landscape mobile: side-by-side ─────────── */
     @media (max-height: 500px) and (orientation: landscape) {
-      body { padding-top: 10px; padding-bottom: 10px; }
-      h1   { font-size: 1.3rem; margin-bottom: 2px; }
-      .subtitle { display: none; }
-      .ring-wrap { width: min(35vw, 160px); height: min(35vw, 160px); }
-      .timer-card { flex-direction: row; flex-wrap: wrap; gap: 12px; padding: 14px 16px; }
-      .phase-badge, .round-info, .phases-bar, .status-text {
-        width: 100%; text-align: center;
-      }
-      .controls { width: auto; flex-direction: column; }
+      body { padding-top: 8px; padding-bottom: 8px; }
+      h1 { font-size: 1.3rem; }
+      .subtitle, .wakelock-pill { display: none; }
+      .ring-wrap { width: min(34vw, 150px); height: min(34vw, 150px); }
+      .timer-card { flex-direction: row; flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+      .phase-badge, .round-info, .phases-bar, .status-text, .controls { width: 100%; }
+      .controls { flex-direction: column; }
       .btn { min-height: 44px; padding: 10px 14px; }
     }
   </style>
@@ -431,6 +360,11 @@
 
 <h1>⏱ Time Laps</h1>
 <p class="subtitle">הגדר סיבובי זמן עם צפצופי ספירה לאחור</p>
+
+<div class="wakelock-pill" id="wakelockPill">
+  <span class="wakelock-dot"></span>
+  <span id="wakelockLabel">מסך חופשי</span>
+</div>
 
 <!-- Config -->
 <div class="card config-card">
@@ -453,9 +387,7 @@
     <svg viewBox="0 0 220 220">
       <circle class="ring-bg"       cx="110" cy="110" r="100" />
       <circle class="ring-progress" cx="110" cy="110" r="100"
-        id="ringProgress"
-        stroke-dasharray="628.3"
-        stroke-dashoffset="0" />
+        id="ringProgress" stroke-dasharray="628.3" stroke-dashoffset="0" />
     </svg>
     <div class="ring-time">
       <div class="time-display" id="timeDisplay">00:00</div>
@@ -476,7 +408,9 @@
 <div class="finished-banner" id="finishedBanner">✅ כל הסיבובים הושלמו!</div>
 
 <script>
-/* ── Default rounds ─────────────────────────── */
+/* ═══════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════ */
 let roundDefs = [
   { name: 'עבודה', mins: 5, secs: 0 },
   { name: 'הפסקה', mins: 1, secs: 0 },
@@ -506,52 +440,121 @@ function renderConfig() {
       <button class="btn-remove" onclick="removeRound(${i})" title="הסר שלב">✕</button>
       <div class="time-input-wrap">
         <input type="number" inputmode="numeric" min="0" max="99" value="${r.mins}"
-          oninput="roundDefs[${i}].mins=+this.value" />
+          oninput="roundDefs[${i}].mins=+this.value||0" />
         <span>דקות</span>
         <input type="number" inputmode="numeric" min="0" max="59"
           value="${String(r.secs).padStart(2,'0')}"
-          oninput="roundDefs[${i}].secs=+this.value" />
+          oninput="roundDefs[${i}].secs=+this.value||0" />
         <span>שניות</span>
       </div>
     `;
     list.appendChild(row);
   });
 }
-
 renderConfig();
 
-/* ── Audio ──────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   WAKE LOCK
+═══════════════════════════════════════════ */
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', onWakeLockReleased);
+    setWakeLockUI(true);
+  } catch (e) { /* not available */ }
+}
+
+function onWakeLockReleased() {
+  wakeLock = null;
+  setWakeLockUI(false);
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) { await wakeLock.release(); }
+}
+
+function setWakeLockUI(active) {
+  const pill  = document.getElementById('wakelockPill');
+  const label = document.getElementById('wakelockLabel');
+  pill.className  = 'wakelock-pill' + (active ? ' active' : '');
+  label.textContent = active ? 'מסך פעיל' : 'מסך חופשי';
+}
+
+// Re-acquire wake lock when the page becomes visible (e.g. user wakes screen)
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden) return;
+  if (running && !wakeLock) await requestWakeLock();
+  if (running) catchUpFromBackground();
+});
+
+/* ═══════════════════════════════════════════
+   AUDIO — all beeps scheduled on the
+   Web Audio clock so they fire even when
+   JS timers are throttled (screen off)
+═══════════════════════════════════════════ */
 let audioCtx = null;
+let scheduledNodes = [];
 
 function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx)
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
-function beep(freq = 880, durationMs = 120, volume = 0.5) {
-  try {
-    const ctx = getAudioCtx();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(volume, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationMs / 1000);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + durationMs / 1000);
-  } catch (e) { console.warn('audio', e); }
+function cancelScheduledAudio() {
+  scheduledNodes.forEach(n => { try { n.stop(0); } catch(e){} });
+  scheduledNodes = [];
 }
 
-const shortBeep = () => beep(880, 130, 0.55);
-const longBeep  = () => beep(660, 600, 0.65);
+function scheduleOsc(ctx, startAt, freq, durSec, vol) {
+  if (startAt < ctx.currentTime) return; // already past
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, startAt);
+  gain.gain.exponentialRampToValueAtTime(0.001, startAt + durSec);
+  osc.start(startAt);
+  osc.stop(startAt + durSec + 0.05);
+  scheduledNodes.push(osc);
+}
 
-/* ── Timer state ────────────────────────────── */
-let sequence = [], seqIdx = 0, remaining = 0, totalForPhase = 0;
-let repeatCount = 1, ticker = null, running = false;
-let beeped3 = false, beeped2 = false, beeped1 = false;
+function schedulePhaseAudio() {
+  cancelScheduledAudio();
+  const ctx     = getAudioCtx();
+  const secsLeft = Math.max(0, (phaseEndTime - Date.now()) / 1000);
+  const now     = ctx.currentTime;
+
+  // 3 sec before end – short beep
+  if (secsLeft > 3) scheduleOsc(ctx, now + secsLeft - 3, 880, 0.13, 0.55);
+  // 2 sec before end – short beep
+  if (secsLeft > 2) scheduleOsc(ctx, now + secsLeft - 2, 880, 0.13, 0.55);
+  // 1 sec before end – long beep
+  if (secsLeft > 1) scheduleOsc(ctx, now + secsLeft - 1, 660, 0.60, 0.65);
+  // At 0 – two long beeps (end of phase)
+  scheduleOsc(ctx, now + secsLeft,       660, 0.50, 0.60);
+  scheduleOsc(ctx, now + secsLeft + 0.7, 660, 0.50, 0.60);
+}
+
+/* ═══════════════════════════════════════════
+   TIMER STATE
+═══════════════════════════════════════════ */
+let sequence      = [];
+let seqIdx        = 0;
+let phaseEndTime  = 0;   // absolute ms timestamp when current phase ends
+let totalForPhase = 0;   // total seconds of current phase
+let pausedSecs    = 0;   // seconds left when paused
+let repeatCount   = 1;
+let ticker        = null;
+let running       = false;
+
+const CIRC = 628.3; // 2π × 100
 
 function buildSequence() {
   repeatCount = Math.max(1, parseInt(document.getElementById('repeatCount').value) || 1);
@@ -571,44 +574,63 @@ function buildSequence() {
   }
 }
 
+/* ── Start ──────────────────────────────── */
 function startTimer() {
-  getAudioCtx(); // unlock on user gesture
-  if (sequence.length === 0 || seqIdx >= sequence.length) {
-    buildSequence();
-    seqIdx = 0;
-  }
+  getAudioCtx(); // unlock audio on user gesture
+
   if (!running) {
-    if (remaining === 0) loadPhase(seqIdx);
+    if (sequence.length === 0 || seqIdx >= sequence.length) {
+      buildSequence();
+      seqIdx = 0;
+      loadPhase(seqIdx);
+    } else if (pausedSecs > 0) {
+      // Resume from pause – recalculate end time from stored remaining
+      phaseEndTime = Date.now() + pausedSecs * 1000;
+      pausedSecs   = 0;
+      schedulePhaseAudio();
+    } else {
+      loadPhase(seqIdx);
+    }
+
     running = true;
     document.getElementById('btnStart').disabled = true;
     document.getElementById('btnPause').disabled = false;
     document.getElementById('btnReset').disabled = false;
     document.getElementById('finishedBanner').classList.remove('show');
-    tick();
-    ticker = setInterval(tick, 1000);
+
+    requestWakeLock();
+    tick(); // immediate first render
+    ticker = setInterval(tick, 500); // poll twice/sec for smooth display
   }
 }
 
+/* ── Pause ──────────────────────────────── */
 function pauseTimer() {
   if (!running) return;
-  running = false;
   clearInterval(ticker);
+  running = false;
+  pausedSecs = Math.max(0, Math.round((phaseEndTime - Date.now()) / 1000));
+  cancelScheduledAudio();
+  releaseWakeLock();
   document.getElementById('btnStart').disabled = false;
   document.getElementById('btnPause').disabled = true;
   document.getElementById('statusText').textContent = '⏸ מושהה';
 }
 
+/* ── Reset ──────────────────────────────── */
 function resetTimer() {
   clearInterval(ticker);
   running = false;
-  seqIdx = 0; remaining = 0; sequence = [];
-  beeped3 = beeped2 = beeped1 = false;
-  updateDisplay(0, 0);
+  cancelScheduledAudio();
+  releaseWakeLock();
+  seqIdx = 0; phaseEndTime = 0; pausedSecs = 0; sequence = [];
+
   document.getElementById('phaseBadge').textContent  = 'מוכן';
   document.getElementById('phaseBadge').className    = 'phase-badge';
   document.getElementById('roundInfo').textContent   = 'סיבוב – / –';
   document.getElementById('ringProgress').style.strokeDashoffset = '0';
   document.getElementById('ringProgress').style.stroke = 'var(--accent-work)';
+  document.getElementById('timeDisplay').textContent = '00:00';
   document.getElementById('timeDisplay').className   = 'time-display';
   document.getElementById('statusText').textContent  = '';
   document.getElementById('btnStart').disabled  = false;
@@ -618,11 +640,12 @@ function resetTimer() {
   renderPhasesBar([]);
 }
 
+/* ── Load phase ─────────────────────────── */
 function loadPhase(idx) {
-  const ph = sequence[idx];
+  const ph      = sequence[idx];
   totalForPhase = ph.totalSecs;
-  remaining = ph.totalSecs;
-  beeped3 = beeped2 = beeped1 = false;
+  phaseEndTime  = Date.now() + ph.totalSecs * 1000;
+  pausedSecs    = 0;
 
   const badge = document.getElementById('phaseBadge');
   badge.textContent = ph.name;
@@ -635,50 +658,89 @@ function loadPhase(idx) {
     `סיבוב ${ph.repeatNum} / ${repeatCount}  •  שלב ${(idx % roundDefs.length) + 1} מתוך ${roundDefs.length}`;
 
   renderPhasesBar(sequence);
+  schedulePhaseAudio(); // schedule all beeps on the audio clock
 }
 
+/* ── Tick (runs every 500ms) ────────────── */
 function tick() {
-  if (remaining <= 0) { nextPhase(); return; }
-  if (remaining === 3 && !beeped3) { beeped3 = true; shortBeep(); pulseRing(); }
-  if (remaining === 2 && !beeped2) { beeped2 = true; shortBeep(); pulseRing(); }
-  if (remaining === 1 && !beeped1) { beeped1 = true; longBeep();  pulseRing(); }
-  updateDisplay(remaining, totalForPhase);
-  remaining--;
+  const secs = Math.max(0, Math.round((phaseEndTime - Date.now()) / 1000));
+  updateDisplay(secs);
+
+  if (secs <= 0 && running) {
+    // Transition immediately – no waiting for next interval
+    clearInterval(ticker);
+    nextPhase();
+  }
 }
 
+/* ── Next phase ─────────────────────────── */
 function nextPhase() {
   seqIdx++;
+
   if (seqIdx >= sequence.length) {
-    clearInterval(ticker);
     running = false;
-    updateDisplay(0, totalForPhase);
+    releaseWakeLock();
+    cancelScheduledAudio();
+    updateDisplay(0);
     document.getElementById('phaseBadge').textContent = 'הסתיים!';
     document.getElementById('statusText').textContent = '';
     document.getElementById('btnStart').disabled = false;
     document.getElementById('btnPause').disabled = true;
     document.getElementById('finishedBanner').classList.add('show');
-    longBeep();
-    setTimeout(longBeep, 700);
     return;
   }
-  loadPhase(seqIdx);
-  beeped3 = beeped2 = beeped1 = false;
+
+  loadPhase(seqIdx); // sets new phaseEndTime and schedules audio
+  tick();            // immediate display of new phase
+  if (running) ticker = setInterval(tick, 500);
 }
 
-/* ── Display ────────────────────────────────── */
-function updateDisplay(secs, total) {
+/* ── Catch-up after screen-off ──────────── */
+function catchUpFromBackground() {
+  const now  = Date.now();
+  // Fast-forward through any phases that ended while the screen was off
+  while (running && phaseEndTime <= now) {
+    if (seqIdx + 1 >= sequence.length) {
+      // All done
+      seqIdx = sequence.length;
+      clearInterval(ticker);
+      nextPhase(); // will trigger finish
+      return;
+    }
+    seqIdx++;
+    const ph  = sequence[seqIdx];
+    totalForPhase = ph.totalSecs;
+    // Each phase starts right after the previous ended
+    phaseEndTime += ph.totalSecs * 1000;
+
+    const badge = document.getElementById('phaseBadge');
+    badge.textContent = ph.name;
+    badge.className   = 'phase-badge' + (ph.isBreak ? ' break' : '');
+    document.getElementById('ringProgress').style.stroke =
+      ph.isBreak ? 'var(--accent-break)' : 'var(--accent-work)';
+  }
+
+  if (running) {
+    schedulePhaseAudio(); // re-schedule remaining beeps
+    tick();
+    clearInterval(ticker);
+    ticker = setInterval(tick, 500);
+  }
+}
+
+/* ── Display ────────────────────────────── */
+function updateDisplay(secs) {
   const m = Math.floor(secs / 60), s = secs % 60;
   document.getElementById('timeDisplay').textContent =
     `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 
-  const disp = document.getElementById('timeDisplay');
-  disp.className = secs <= 1 ? 'time-display danger'
-                 : secs <= 3 ? 'time-display warn'
-                 : 'time-display';
+  document.getElementById('timeDisplay').className =
+    secs <= 1 ? 'time-display danger'
+  : secs <= 3 ? 'time-display warn'
+  : 'time-display';
 
-  const CIRC = 628.3;
   document.getElementById('ringProgress').style.strokeDashoffset =
-    CIRC * (1 - (total > 0 ? secs / total : 0));
+    CIRC * (1 - (totalForPhase > 0 ? secs / totalForPhase : 0));
 
   document.getElementById('statusText').textContent =
     (secs <= 3 && secs > 0 && running) ? `⚠️ ${secs} שניות נותרו!` : '';
@@ -698,9 +760,8 @@ function renderPhasesBar(seq) {
     const seg = document.createElement('div');
     seg.className = 'phase-seg'
       + (ph.isBreak ? ' break' : '')
-      + (i < seqIdx  ? ' done'  : '')
+      + (i < seqIdx   ? ' done'   : '')
       + (i === seqIdx ? ' active' : '');
-    if (i === seqIdx) seg.style.setProperty('--seg-dur', ph.totalSecs + 's');
     seg.title = ph.name;
     bar.appendChild(seg);
   });
