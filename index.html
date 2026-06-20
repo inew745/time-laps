@@ -68,8 +68,16 @@
       text-align: center;
     }
 
-    /* Wake lock pill */
-    .wakelock-pill {
+    /* Status pills */
+    .pills-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+
+    .pill {
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -79,20 +87,25 @@
       border: 1px solid var(--border);
       border-radius: 99px;
       padding: 3px 10px;
-      margin-bottom: 14px;
-      transition: color 0.3s, border-color 0.3s;
+      transition: color 0.3s, border-color 0.3s, opacity 0.3s;
+      cursor: default;
+      white-space: nowrap;
     }
-    .wakelock-pill.active {
+    .pill.active {
       color: var(--accent-break);
       border-color: rgba(52,211,153,.35);
     }
-    .wakelock-dot {
+    .pill.warn {
+      color: var(--accent-warn);
+      border-color: rgba(245,158,11,.35);
+      cursor: pointer;
+    }
+    .pill-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--text-muted);
-      transition: background 0.3s;
+      background: currentColor;
+      flex-shrink: 0;
     }
-    .wakelock-pill.active .wakelock-dot { background: var(--accent-break); }
 
     /* Cards */
     .card {
@@ -347,7 +360,7 @@
     @media (max-height: 500px) and (orientation: landscape) {
       body { padding-top: 8px; padding-bottom: 8px; }
       h1 { font-size: 1.3rem; }
-      .subtitle, .wakelock-pill { display: none; }
+      .subtitle, .pills-row { display: none; }
       .ring-wrap { width: min(34vw, 150px); height: min(34vw, 150px); }
       .timer-card { flex-direction: row; flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
       .phase-badge, .round-info, .phases-bar, .status-text, .controls { width: 100%; }
@@ -361,9 +374,15 @@
 <h1>⏱ Time Laps</h1>
 <p class="subtitle">הגדר סיבובי זמן עם צפצופי ספירה לאחור</p>
 
-<div class="wakelock-pill" id="wakelockPill">
-  <span class="wakelock-dot"></span>
-  <span id="wakelockLabel">מסך חופשי</span>
+<div class="pills-row">
+  <div class="pill" id="pillWake">
+    <span class="pill-dot"></span>
+    <span id="pillWakeLabel">מסך חופשי</span>
+  </div>
+  <div class="pill" id="pillNotif" onclick="requestNotifPermission()" style="cursor:pointer" title="לחץ לאישור התראות">
+    <span class="pill-dot"></span>
+    <span id="pillNotifLabel">התראות כבויות</span>
+  </div>
 </div>
 
 <!-- Config -->
@@ -408,6 +427,90 @@
 <div class="finished-banner" id="finishedBanner">✅ כל הסיבובים הושלמו!</div>
 
 <script>
+/* ═══════════════════════════════════════════
+   SERVICE WORKER + NOTIFICATIONS
+═══════════════════════════════════════════ */
+let swReg = null;
+let notifGranted = false;
+
+async function initSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swReg = await navigator.serviceWorker.register('./sw.js');
+  } catch(e) {}
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') { notifGranted = true; updateNotifPill(); return; }
+  if (Notification.permission === 'denied')  { updateNotifPill(); return; }
+  const result = await Notification.requestPermission();
+  notifGranted = (result === 'granted');
+  updateNotifPill();
+}
+
+function updateNotifPill() {
+  const pill  = document.getElementById('pillNotif');
+  const label = document.getElementById('pillNotifLabel');
+  if (!('Notification' in window)) {
+    pill.style.display = 'none';
+    return;
+  }
+  if (notifGranted || Notification.permission === 'granted') {
+    notifGranted = true;
+    pill.className = 'pill active';
+    label.textContent = 'התראות פעילות';
+  } else if (Notification.permission === 'denied') {
+    pill.className = 'pill';
+    label.textContent = 'התראות חסומות';
+    pill.style.cursor = 'default';
+  } else {
+    pill.className = 'pill warn';
+    label.textContent = 'הפעל התראות';
+  }
+}
+
+function buildPhaseSchedule() {
+  // Build absolute-timestamp schedule for remaining phases
+  let t = phaseEndTime;
+  return sequence.slice(seqIdx).map((ph, i) => {
+    const endsAt = t;
+    if (i + 1 < sequence.length - seqIdx) t += sequence[seqIdx + i + 1].totalSecs * 1000;
+    return {
+      name:     ph.name,
+      endsAt,
+      setsLeft: repeatCount - ph.repeatNum,
+    };
+  });
+}
+
+function sendScheduleToSW(phases) {
+  const sw = swReg?.active || swReg?.installing || swReg?.waiting;
+  if (!sw) return;
+  sw.postMessage({ type: 'SCHEDULE', phases });
+}
+
+function cancelSWSchedule() {
+  const sw = swReg?.active || swReg?.installing || swReg?.waiting;
+  if (!sw) return;
+  sw.postMessage({ type: 'CANCEL' });
+}
+
+function notifySWForeground() {
+  const sw = swReg?.active || swReg?.installing || swReg?.waiting;
+  if (!sw) return;
+  sw.postMessage({ type: 'FOREGROUND' });
+}
+
+/* ── Init on load ──────────────────────── */
+initSW();
+if ('Notification' in window) {
+  notifGranted = Notification.permission === 'granted';
+  updateNotifPill();
+} else {
+  document.getElementById('pillNotif').style.display = 'none';
+}
+
 /* ═══════════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════════ */
@@ -462,38 +565,38 @@ async function requestWakeLock() {
   if (!('wakeLock' in navigator)) return;
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', onWakeLockReleased);
-    setWakeLockUI(true);
-  } catch (e) { /* not available */ }
-}
-
-function onWakeLockReleased() {
-  wakeLock = null;
-  setWakeLockUI(false);
+    wakeLock.addEventListener('release', () => { wakeLock = null; setWakeUI(false); });
+    setWakeUI(true);
+  } catch(e) {}
 }
 
 async function releaseWakeLock() {
   if (wakeLock) { await wakeLock.release(); }
 }
 
-function setWakeLockUI(active) {
-  const pill  = document.getElementById('wakelockPill');
-  const label = document.getElementById('wakelockLabel');
-  pill.className  = 'wakelock-pill' + (active ? ' active' : '');
+function setWakeUI(active) {
+  const pill  = document.getElementById('pillWake');
+  const label = document.getElementById('pillWakeLabel');
+  pill.className    = 'pill' + (active ? ' active' : '');
   label.textContent = active ? 'מסך פעיל' : 'מסך חופשי';
 }
 
-// Re-acquire wake lock when the page becomes visible (e.g. user wakes screen)
+/* ── Visibility change ─────────────────── */
 document.addEventListener('visibilitychange', async () => {
-  if (document.hidden) return;
-  if (running && !wakeLock) await requestWakeLock();
-  if (running) catchUpFromBackground();
+  if (document.hidden) {
+    // Screen turned off / app backgrounded
+    if (running && notifGranted) sendScheduleToSW(buildPhaseSchedule());
+  } else {
+    // Screen woke up
+    notifySWForeground();
+    if (running && !wakeLock) await requestWakeLock();
+    if (running) catchUpFromBackground();
+  }
 });
 
 /* ═══════════════════════════════════════════
-   AUDIO — all beeps scheduled on the
-   Web Audio clock so they fire even when
-   JS timers are throttled (screen off)
+   AUDIO  (Web Audio clock – fires even when
+   JS timers are throttled / screen is off)
 ═══════════════════════════════════════════ */
 let audioCtx = null;
 let scheduledNodes = [];
@@ -511,33 +614,24 @@ function cancelScheduledAudio() {
 }
 
 function scheduleOsc(ctx, startAt, freq, durSec, vol) {
-  if (startAt < ctx.currentTime) return; // already past
-  const osc  = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sine';
-  osc.frequency.value = freq;
+  if (startAt < ctx.currentTime) return;
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine'; osc.frequency.value = freq;
   gain.gain.setValueAtTime(vol, startAt);
   gain.gain.exponentialRampToValueAtTime(0.001, startAt + durSec);
-  osc.start(startAt);
-  osc.stop(startAt + durSec + 0.05);
+  osc.start(startAt); osc.stop(startAt + durSec + 0.05);
   scheduledNodes.push(osc);
 }
 
 function schedulePhaseAudio() {
   cancelScheduledAudio();
-  const ctx     = getAudioCtx();
+  const ctx      = getAudioCtx();
   const secsLeft = Math.max(0, (phaseEndTime - Date.now()) / 1000);
-  const now     = ctx.currentTime;
-
-  // 3 sec before end – short beep
+  const now      = ctx.currentTime;
   if (secsLeft > 3) scheduleOsc(ctx, now + secsLeft - 3, 880, 0.13, 0.55);
-  // 2 sec before end – short beep
   if (secsLeft > 2) scheduleOsc(ctx, now + secsLeft - 2, 880, 0.13, 0.55);
-  // 1 sec before end – long beep
   if (secsLeft > 1) scheduleOsc(ctx, now + secsLeft - 1, 660, 0.60, 0.65);
-  // At 0 – two long beeps (end of phase)
   scheduleOsc(ctx, now + secsLeft,       660, 0.50, 0.60);
   scheduleOsc(ctx, now + secsLeft + 0.7, 660, 0.50, 0.60);
 }
@@ -547,14 +641,13 @@ function schedulePhaseAudio() {
 ═══════════════════════════════════════════ */
 let sequence      = [];
 let seqIdx        = 0;
-let phaseEndTime  = 0;   // absolute ms timestamp when current phase ends
-let totalForPhase = 0;   // total seconds of current phase
-let pausedSecs    = 0;   // seconds left when paused
+let phaseEndTime  = 0;
+let totalForPhase = 0;
+let pausedSecs    = 0;
 let repeatCount   = 1;
 let ticker        = null;
 let running       = false;
-
-const CIRC = 628.3; // 2π × 100
+const CIRC        = 628.3;
 
 function buildSequence() {
   repeatCount = Math.max(1, parseInt(document.getElementById('repeatCount').value) || 1);
@@ -562,45 +655,40 @@ function buildSequence() {
   for (let r = 0; r < repeatCount; r++) {
     roundDefs.forEach((rd, i) => {
       const secs = (rd.mins || 0) * 60 + (rd.secs || 0);
-      if (secs > 0) {
-        sequence.push({
-          name: rd.name || `שלב ${i + 1}`,
-          totalSecs: secs,
-          isBreak: i % 2 === 1,
-          repeatNum: r + 1,
-        });
-      }
+      if (secs > 0) sequence.push({
+        name: rd.name || `שלב ${i + 1}`,
+        totalSecs: secs,
+        isBreak: i % 2 === 1,
+        repeatNum: r + 1,
+      });
     });
   }
 }
 
 /* ── Start ──────────────────────────────── */
 function startTimer() {
-  getAudioCtx(); // unlock audio on user gesture
+  getAudioCtx();
+  if (notifGranted === false && Notification.permission === 'default')
+    requestNotifPermission(); // opportunistic ask on first start
 
   if (!running) {
     if (sequence.length === 0 || seqIdx >= sequence.length) {
-      buildSequence();
-      seqIdx = 0;
-      loadPhase(seqIdx);
+      buildSequence(); seqIdx = 0; loadPhase(seqIdx);
     } else if (pausedSecs > 0) {
-      // Resume from pause – recalculate end time from stored remaining
       phaseEndTime = Date.now() + pausedSecs * 1000;
       pausedSecs   = 0;
       schedulePhaseAudio();
     } else {
       loadPhase(seqIdx);
     }
-
     running = true;
     document.getElementById('btnStart').disabled = true;
     document.getElementById('btnPause').disabled = false;
     document.getElementById('btnReset').disabled = false;
     document.getElementById('finishedBanner').classList.remove('show');
-
     requestWakeLock();
-    tick(); // immediate first render
-    ticker = setInterval(tick, 500); // poll twice/sec for smooth display
+    tick();
+    ticker = setInterval(tick, 500);
   }
 }
 
@@ -608,9 +696,10 @@ function startTimer() {
 function pauseTimer() {
   if (!running) return;
   clearInterval(ticker);
-  running = false;
+  running    = false;
   pausedSecs = Math.max(0, Math.round((phaseEndTime - Date.now()) / 1000));
   cancelScheduledAudio();
+  cancelSWSchedule();
   releaseWakeLock();
   document.getElementById('btnStart').disabled = false;
   document.getElementById('btnPause').disabled = true;
@@ -622,9 +711,9 @@ function resetTimer() {
   clearInterval(ticker);
   running = false;
   cancelScheduledAudio();
+  cancelSWSchedule();
   releaseWakeLock();
   seqIdx = 0; phaseEndTime = 0; pausedSecs = 0; sequence = [];
-
   document.getElementById('phaseBadge').textContent  = 'מוכן';
   document.getElementById('phaseBadge').className    = 'phase-badge';
   document.getElementById('roundInfo').textContent   = 'סיבוב – / –';
@@ -650,24 +739,26 @@ function loadPhase(idx) {
   const badge = document.getElementById('phaseBadge');
   badge.textContent = ph.name;
   badge.className   = 'phase-badge' + (ph.isBreak ? ' break' : '');
-
   document.getElementById('ringProgress').style.stroke =
     ph.isBreak ? 'var(--accent-break)' : 'var(--accent-work)';
-
   document.getElementById('roundInfo').textContent =
     `סיבוב ${ph.repeatNum} / ${repeatCount}  •  שלב ${(idx % roundDefs.length) + 1} מתוך ${roundDefs.length}`;
 
   renderPhasesBar(sequence);
-  schedulePhaseAudio(); // schedule all beeps on the audio clock
+  schedulePhaseAudio();
+
+  // Update SW schedule whenever a phase loads (handles phase transitions)
+  if (notifGranted && !document.hidden)
+    ; // SW will be notified via visibilitychange when screen turns off
+  else if (notifGranted && document.hidden)
+    sendScheduleToSW(buildPhaseSchedule());
 }
 
-/* ── Tick (runs every 500ms) ────────────── */
+/* ── Tick ────────────────────────────────── */
 function tick() {
   const secs = Math.max(0, Math.round((phaseEndTime - Date.now()) / 1000));
   updateDisplay(secs);
-
   if (secs <= 0 && running) {
-    // Transition immediately – no waiting for next interval
     clearInterval(ticker);
     nextPhase();
   }
@@ -676,11 +767,11 @@ function tick() {
 /* ── Next phase ─────────────────────────── */
 function nextPhase() {
   seqIdx++;
-
   if (seqIdx >= sequence.length) {
     running = false;
     releaseWakeLock();
     cancelScheduledAudio();
+    cancelSWSchedule();
     updateDisplay(0);
     document.getElementById('phaseBadge').textContent = 'הסתיים!';
     document.getElementById('statusText').textContent = '';
@@ -689,39 +780,33 @@ function nextPhase() {
     document.getElementById('finishedBanner').classList.add('show');
     return;
   }
-
-  loadPhase(seqIdx); // sets new phaseEndTime and schedules audio
-  tick();            // immediate display of new phase
+  loadPhase(seqIdx);
+  tick();
   if (running) ticker = setInterval(tick, 500);
 }
 
 /* ── Catch-up after screen-off ──────────── */
 function catchUpFromBackground() {
-  const now  = Date.now();
-  // Fast-forward through any phases that ended while the screen was off
+  const now = Date.now();
   while (running && phaseEndTime <= now) {
     if (seqIdx + 1 >= sequence.length) {
-      // All done
       seqIdx = sequence.length;
       clearInterval(ticker);
-      nextPhase(); // will trigger finish
+      nextPhase();
       return;
     }
     seqIdx++;
     const ph  = sequence[seqIdx];
     totalForPhase = ph.totalSecs;
-    // Each phase starts right after the previous ended
     phaseEndTime += ph.totalSecs * 1000;
-
     const badge = document.getElementById('phaseBadge');
     badge.textContent = ph.name;
     badge.className   = 'phase-badge' + (ph.isBreak ? ' break' : '');
     document.getElementById('ringProgress').style.stroke =
       ph.isBreak ? 'var(--accent-break)' : 'var(--accent-work)';
   }
-
   if (running) {
-    schedulePhaseAudio(); // re-schedule remaining beeps
+    schedulePhaseAudio();
     tick();
     clearInterval(ticker);
     ticker = setInterval(tick, 500);
@@ -733,24 +818,12 @@ function updateDisplay(secs) {
   const m = Math.floor(secs / 60), s = secs % 60;
   document.getElementById('timeDisplay').textContent =
     `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-
   document.getElementById('timeDisplay').className =
-    secs <= 1 ? 'time-display danger'
-  : secs <= 3 ? 'time-display warn'
-  : 'time-display';
-
+    secs <= 1 ? 'time-display danger' : secs <= 3 ? 'time-display warn' : 'time-display';
   document.getElementById('ringProgress').style.strokeDashoffset =
     CIRC * (1 - (totalForPhase > 0 ? secs / totalForPhase : 0));
-
   document.getElementById('statusText').textContent =
     (secs <= 3 && secs > 0 && running) ? `⚠️ ${secs} שניות נותרו!` : '';
-}
-
-function pulseRing() {
-  const r = document.getElementById('ringWrap');
-  r.classList.remove('beep');
-  void r.offsetWidth;
-  r.classList.add('beep');
 }
 
 function renderPhasesBar(seq) {
@@ -759,8 +832,8 @@ function renderPhasesBar(seq) {
   seq.forEach((ph, i) => {
     const seg = document.createElement('div');
     seg.className = 'phase-seg'
-      + (ph.isBreak ? ' break' : '')
-      + (i < seqIdx   ? ' done'   : '')
+      + (ph.isBreak  ? ' break'  : '')
+      + (i < seqIdx  ? ' done'   : '')
       + (i === seqIdx ? ' active' : '');
     seg.title = ph.name;
     bar.appendChild(seg);
